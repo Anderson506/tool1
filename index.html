@@ -266,10 +266,12 @@
             <label for="vocalRange">Choose your voice type:</label>
             <select id="vocalRange">
                 <option value="soprano">Soprano (C4-A5)</option>
-                <option value="alto">Alto (G3-E5)</option>
+                <option value="mezzo">Mezzo-Soprano (A3-F5)</option>
+                <option value="alto">Alto (G3-D5)</option>
                 <option value="tenor" selected>Tenor (C3-A4)</option>
-                <option value="bass">Bass (E2-E4)</option>
-                <option value="all">All Ranges (C3-C6)</option>
+                <option value="baritone">Baritone (A2-F4)</option>
+                <option value="bass">Bass (E2-D4)</option>
+                <option value="all">All Ranges (E2-A5)</option>
             </select>
         </div>
         <div class="exercise-info">
@@ -357,10 +359,12 @@
 
                 this.vocalRanges = {
                     soprano: ['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5', 'C#5', 'D5', 'D#5', 'E5', 'F5', 'F#5', 'G5', 'G#5', 'A5'],
-                    alto: ['G3', 'G#3', 'A3', 'A#3', 'B3', 'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5', 'C#5', 'D5', 'D#5', 'E5'],
+                    mezzo: ['A3', 'A#3', 'B3', 'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5', 'C#5', 'D5', 'D#5', 'E5', 'F5'],
+                    alto: ['G3', 'G#3', 'A3', 'A#3', 'B3', 'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5', 'C#5', 'D5'],
                     tenor: ['C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3', 'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4'],
-                    bass: ['E2', 'F2', 'G2', 'A2', 'B2', 'C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3', 'C4', 'C#4', 'D4', 'D#4', 'E4'],
-                    all: ['C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3', 'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5', 'C#5', 'D5', 'D#5', 'E5', 'F5', 'F#5', 'G5', 'G#5', 'A5', 'A#5', 'B5', 'C6']
+                    baritone: ['A2', 'A#2', 'B2', 'C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3', 'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4'],
+                    bass: ['E2', 'F2', 'F#2', 'G2', 'G#2', 'A2', 'A#2', 'B2', 'C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3', 'C4', 'C#4', 'D4'],
+                    all: ['E2', 'F2', 'F#2', 'G2', 'G#2', 'A2', 'A#2', 'B2', 'C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3', 'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5', 'C#5', 'D5', 'D#5', 'E5', 'F5', 'F#5', 'G5', 'G#5', 'A5']
                 };
 
                 this.init();
@@ -603,48 +607,99 @@
 
             drawNote(ctx, note) {
                 const notePositions = {
-                    'C2': 250, 'D2': 245, 'E2': 240, 'F2': 235, 'G2': 230, 'A2': 225, 'B2': 220,
-                    'C3': 215, 'D3': 210, 'E3': 205, 'F3': 200, 'G3': 195, 'A3': 190, 'B3': 185,
-                    'C4': 155,
-                    'D4': 105, 'E4': 97, 'F4': 90, 'G4': 82, 'A4': 75, 'B4': 67, 'C5': 60,
-                    'D5': 52, 'E5': 45, 'F5': 37, 'G5': 30, 'A5': 22, 'B5': 15, 'C6': 7,
-                    'C#3': 215, 'D#3': 210, 'F#3': 200, 'G#3': 195, 'A#3': 190,
-                    'C#4': 155, 'D#4': 105, 'F#4': 90, 'G#4': 82, 'A#4': 75,
-                    'C#5': 60, 'D#5': 52, 'F#5': 37, 'G#5': 30, 'A#5': 22
+                    // Bass clef notes (lower staff) - lines from bottom to top: G2, B2, D3, F3, A3
+                    'E2': 250, 'F2': 245, 'G2': 240, 'A2': 232, 'B2': 225, 
+                    'C3': 217, 'D3': 210, 'E3': 202, 'F3': 195, 'G3': 187, 'A3': 180,
+                    
+                    // Middle C (between staves)
+                    'B3': 172, 'C4': 155, 'D4': 147,
+                    
+                    // Treble clef notes (upper staff) - lines from bottom to top: E4, G4, B4, D5, F5
+                    'E4': 135, 'F4': 127, 'G4': 120, 'A4': 112, 'B4': 105, 
+                    'C5': 97, 'D5': 90, 'E5': 82, 'F5': 75, 'G5': 67, 'A5': 60,
+                    'B5': 52, 'C6': 45,
+                    
+                    // Chromatic notes (use base note position)
+                    'F#2': 245, 'G#2': 236, 'A#2': 228,
+                    'C#3': 217, 'D#3': 206, 'F#3': 195, 'G#3': 184, 'A#3': 176,
+                    'C#4': 155, 'D#4': 147,
+                    'F#4': 127, 'G#4': 116, 'A#4': 108,
+                    'C#5': 97, 'D#5': 90, 'F#5': 75, 'G#5': 64, 'A#5': 56
                 };
+                
                 const y = notePositions[note] || 150;
                 const x = 200;
+                
+                // Draw note head
                 ctx.fillStyle = '#4299e1';
                 ctx.beginPath();
                 ctx.ellipse(x, y, 8, 6, 0, 0, 2 * Math.PI);
                 ctx.fill();
+                
+                // Draw stem (up or down based on position)
                 ctx.strokeStyle = '#4299e1';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                if (y > 150) {
+                if (y > 150) { // Lower notes, stem up
                     ctx.moveTo(x + 8, y);
                     ctx.lineTo(x + 8, y - 30);
-                } else {
+                } else { // Higher notes, stem down
                     ctx.moveTo(x - 8, y);
                     ctx.lineTo(x - 8, y + 30);
                 }
                 ctx.stroke();
+                
+                // Draw sharp or flat if needed
                 if (note.includes('#')) {
                     ctx.font = '16px serif';
                     ctx.fillStyle = '#4299e1';
                     ctx.fillText('♯', x - 25, y + 5);
                 }
+                
+                // Highlight the note
                 ctx.strokeStyle = '#ed8936';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
                 ctx.ellipse(x, y, 12, 10, 0, 0, 2 * Math.PI);
                 ctx.stroke();
+                
+                // Add ledger lines for notes outside the staff
                 ctx.strokeStyle = '#333';
                 ctx.lineWidth = 1;
+                
+                // Middle C ledger line
                 if (note === 'C4') {
                     ctx.beginPath();
-                    ctx.moveTo(x - 15, y);
-                    ctx.lineTo(x + 15, y);
+                    ctx.moveTo(x - 15, 155);
+                    ctx.lineTo(x + 15, 155);
+                    ctx.stroke();
+                }
+                
+                // High ledger lines (above treble staff)
+                if (y < 60) { // A5 and above
+                    ctx.beginPath();
+                    ctx.moveTo(x - 15, 60);
+                    ctx.lineTo(x + 15, 60);
+                    ctx.stroke();
+                }
+                if (y < 45) { // C6 and above
+                    ctx.beginPath();
+                    ctx.moveTo(x - 15, 45);
+                    ctx.lineTo(x + 15, 45);
+                    ctx.stroke();
+                }
+                
+                // Low ledger lines (below bass staff)
+                if (y > 240) { // G2 and below
+                    ctx.beginPath();
+                    ctx.moveTo(x - 15, 240);
+                    ctx.lineTo(x + 15, 240);
+                    ctx.stroke();
+                }
+                if (y > 255) { // E2 and below
+                    ctx.beginPath();
+                    ctx.moveTo(x - 15, 255);
+                    ctx.lineTo(x + 15, 255);
                     ctx.stroke();
                 }
             }
