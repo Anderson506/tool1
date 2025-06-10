@@ -340,12 +340,23 @@
                 this.microphone = null;
                 this.analyser = null;
                 this.isListening = false;
-                this.targetFrequency = 261.63; // C4
+                this.targetFrequency = 261.63;
                 this.currentNote = 'C4';
-                this.synth = new Tone.Synth().toDestination();
+                // Create a more piano-like synthesizer
+                this.synth = new Tone.Synth({
+                    oscillator: {
+                        type: "triangle"
+                    },
+                    envelope: {
+                        attack: 0.02,
+                        decay: 0.1,
+                        sustain: 0.3,
+                        release: 1.2
+                    }
+                }).toDestination();
                 this.scores = [];
                 this.recordingStartTime = 0;
-                this.recordingDuration = 3000; // 3 seconds
+                this.recordingDuration = 3000;
                 this.isRecording = false;
                 this.currentVocalRange = 'tenor';
 
@@ -531,7 +542,7 @@
 
             calculateAccuracy(detected, target) {
                 const cents = 1200 * Math.log2(detected / target);
-                const accuracy = Math.max(0, 100 - Math.abs(cents) / 2); // 200 cents = 0% accuracy
+                const accuracy = Math.max(0, 100 - Math.abs(cents) / 2);
                 return Math.min(100, accuracy);
             }
 
@@ -544,11 +555,18 @@
 
             async playTargetNote() {
                 await Tone.start();
-                this.synth.triggerAttackRelease(this.currentNote, '1n');
+                
                 const playBtn = document.getElementById('playNoteBtn');
                 const originalText = playBtn.textContent;
+                
+                // Update button appearance
                 playBtn.textContent = '🔊 Playing...';
                 playBtn.style.background = '#38a169';
+                
+                // Play the note with piano-like sound
+                this.synth.triggerAttackRelease(this.currentNote, '1n');
+                
+                // Reset button after playing
                 setTimeout(() => {
                     playBtn.textContent = originalText;
                     playBtn.style.background = '#4299e1';
@@ -584,6 +602,7 @@
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.strokeStyle = '#333';
                 ctx.lineWidth = 1;
+                
                 for (let i = 0; i < 5; i++) {
                     const y = 60 + i * 15;
                     ctx.beginPath();
@@ -591,6 +610,7 @@
                     ctx.lineTo(450, y);
                     ctx.stroke();
                 }
+                
                 for (let i = 0; i < 5; i++) {
                     const y = 180 + i * 15;
                     ctx.beginPath();
@@ -598,108 +618,68 @@
                     ctx.lineTo(450, y);
                     ctx.stroke();
                 }
+                
                 ctx.font = '40px serif';
                 ctx.fillStyle = '#333';
                 ctx.fillText('𝄞', 60, 100);
                 ctx.fillText('𝄢', 60, 210);
+                
                 this.drawNote(ctx, this.currentNote);
             }
 
             drawNote(ctx, note) {
                 const notePositions = {
-                    // Bass clef notes (lower staff) - lines from bottom to top: G2, B2, D3, F3, A3
-                    'E2': 250, 'F2': 245, 'G2': 240, 'A2': 232, 'B2': 225, 
+                    'E2': 255, 'F2': 247, 'G2': 240, 'A2': 232, 'B2': 225, 
                     'C3': 217, 'D3': 210, 'E3': 202, 'F3': 195, 'G3': 187, 'A3': 180,
-                    
-                    // Middle C (between staves)
                     'B3': 172, 'C4': 155, 'D4': 147,
-                    
-                    // Treble clef notes (upper staff) - lines from bottom to top: E4, G4, B4, D5, F5
-                    'E4': 135, 'F4': 127, 'G4': 120, 'A4': 112, 'B4': 105, 
-                    'C5': 97, 'D5': 90, 'E5': 82, 'F5': 75, 'G5': 67, 'A5': 60,
-                    'B5': 52, 'C6': 45,
-                    
-                    // Chromatic notes (use base note position)
-                    'F#2': 245, 'G#2': 236, 'A#2': 228,
+                    'E4': 120, 'F4': 112, 'G4': 105, 'A4': 97, 'B4': 90, 
+                    'C5': 82, 'D5': 75, 'E5': 67, 'F5': 60,
+                    'G5': 52, 'A5': 45, 'B5': 37, 'C6': 30,
+                    'F#2': 247, 'G#2': 236, 'A#2': 228,
                     'C#3': 217, 'D#3': 206, 'F#3': 195, 'G#3': 184, 'A#3': 176,
-                    'C#4': 155, 'D#4': 147,
-                    'F#4': 127, 'G#4': 116, 'A#4': 108,
-                    'C#5': 97, 'D#5': 90, 'F#5': 75, 'G#5': 64, 'A#5': 56
+                    'C#4': 155, 'D#4': 147, 'F#4': 112, 'G#4': 101, 'A#4': 93,
+                    'C#5': 82, 'D#5': 71, 'F#5': 60, 'G#5': 48, 'A#5': 41
                 };
                 
                 const y = notePositions[note] || 150;
                 const x = 200;
                 
-                // Draw note head
                 ctx.fillStyle = '#4299e1';
                 ctx.beginPath();
                 ctx.ellipse(x, y, 8, 6, 0, 0, 2 * Math.PI);
                 ctx.fill();
                 
-                // Draw stem (up or down based on position)
                 ctx.strokeStyle = '#4299e1';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                if (y > 150) { // Lower notes, stem up
+                if (y > 150) {
                     ctx.moveTo(x + 8, y);
                     ctx.lineTo(x + 8, y - 30);
-                } else { // Higher notes, stem down
+                } else {
                     ctx.moveTo(x - 8, y);
                     ctx.lineTo(x - 8, y + 30);
                 }
                 ctx.stroke();
                 
-                // Draw sharp or flat if needed
                 if (note.includes('#')) {
                     ctx.font = '16px serif';
                     ctx.fillStyle = '#4299e1';
                     ctx.fillText('♯', x - 25, y + 5);
                 }
                 
-                // Highlight the note
                 ctx.strokeStyle = '#ed8936';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
                 ctx.ellipse(x, y, 12, 10, 0, 0, 2 * Math.PI);
                 ctx.stroke();
                 
-                // Add ledger lines for notes outside the staff
                 ctx.strokeStyle = '#333';
                 ctx.lineWidth = 1;
                 
-                // Middle C ledger line
                 if (note === 'C4') {
                     ctx.beginPath();
                     ctx.moveTo(x - 15, 155);
                     ctx.lineTo(x + 15, 155);
-                    ctx.stroke();
-                }
-                
-                // High ledger lines (above treble staff)
-                if (y < 60) { // A5 and above
-                    ctx.beginPath();
-                    ctx.moveTo(x - 15, 60);
-                    ctx.lineTo(x + 15, 60);
-                    ctx.stroke();
-                }
-                if (y < 45) { // C6 and above
-                    ctx.beginPath();
-                    ctx.moveTo(x - 15, 45);
-                    ctx.lineTo(x + 15, 45);
-                    ctx.stroke();
-                }
-                
-                // Low ledger lines (below bass staff)
-                if (y > 240) { // G2 and below
-                    ctx.beginPath();
-                    ctx.moveTo(x - 15, 240);
-                    ctx.lineTo(x + 15, 240);
-                    ctx.stroke();
-                }
-                if (y > 255) { // E2 and below
-                    ctx.beginPath();
-                    ctx.moveTo(x - 15, 255);
-                    ctx.lineTo(x + 15, 255);
                     ctx.stroke();
                 }
             }
