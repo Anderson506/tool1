@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choir Pitch Detective</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            margin: 0 0 10px 0;
+            font-size: 2.5rem;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .staff-section {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .staff-canvas {
+            width: 100%;
+            height: 300px;
+            background: white;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+        }
+
+        .controls-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .control-panel {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3182ce;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #a0aec0;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #718096;
+            transform: translateY(-2px);
+        }
+
+        .pitch-display {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .current-pitch {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+
+        .pitch-accuracy {
+            height: 40px;
+            background: #e2e8f0;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .accuracy-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #f56565 0%, #ed8936 25%, #ecc94b 50%, #48bb78 75%, #38a169 100%);
+            border-radius: 20px;
+            transition: width 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .score-section {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .score-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #4299e1;
+            margin-bottom: 10px;
+        }
+
+        .exercise-info {
+            background: #ebf8ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4299e1;
+        }
+
+        .vocal-range-selector {
+            background: #f0fff4;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #48bb78;
+        }
+
+        .vocal-range-selector select {
+            padding: 8px 12px;
+            border: 2px solid #48bb78;
+            border-radius: 6px;
+            font-size: 16px;
+            background: white;
+            margin-left: 10px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .status-listening {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .status-ready {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-recording {
+            background: #fbb6ce;
+            color: #b83280;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #4299e1;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Choir Pitch Detective</h1>
+            <p>Learn to sight-sing and match pitch with real-time feedback!</p>
+        </div>
+        <div class="vocal-range-selector">
+            <h3>🎵 Select Your Vocal Range</h3>
+            <label for="vocalRange">Choose your voice type:</label>
+            <select id="vocalRange">
+                <option value="soprano">Soprano (C4-A5)</option>
+                <option value="alto">Alto (G3-E5)</option>
+                <option value="tenor" selected>Tenor (C3-A4)</option>
+                <option value="bass">Bass (E2-E4)</option>
+                <option value="all">All Ranges (C3-C6)</option>
+            </select>
+        </div>
+        <div class="exercise-info">
+            <h3>Current Exercise: Note Matching</h3>
+            <p>🎹 Click "Play Note" to hear the target pitch, then sing it back as accurately as possible!</p>
+            <div>Target Note: <span id="targetNote">C4</span> 
+                <span id="statusIndicator" class="status-indicator status-ready">Ready</span>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="staff-section">
+                <h3>Grand Staff</h3>
+                <canvas id="staffCanvas" class="staff-canvas" width="500" height="300"></canvas>
+            </div>
+            <div class="controls-section">
+                <div class="control-panel">
+                    <h3>Controls</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary" id="playNoteBtn">🎹 Play Target Note</button>
+                        <button class="btn btn-success" id="startListeningBtn">🎤 Start Singing</button>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" id="newNoteBtn">🎲 New Random Note</button>
+                        <button class="btn btn-secondary" id="exportBtn">📤 Export Score</button>
+                    </div>
+                    <div style="margin-top: 15px; padding: 10px; background: #fff5f5; border-radius: 8px; border: 1px solid #fed7d7;">
+                        <small><strong>🎤 Microphone Tips:</strong><br>
+                        • Allow microphone access when prompted<br>
+                        • Sing clearly and close to your device<br>
+                        • Find a quiet environment for best results</small>
+                    </div>
+                </div>
+                <div class="control-panel">
+                    <h3>Your Pitch</h3>
+                    <div class="pitch-display">
+                        <div class="current-pitch" id="currentPitch">--</div>
+                        <div>Detected Frequency: <span id="frequency">-- Hz</span></div>
+                    </div>
+                    
+                    <div class="pitch-accuracy">
+                        <div class="accuracy-bar" id="accuracyBar" style="width: 0%">
+                            <span id="accuracyText">0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="recordingProgress"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="score-section">
+            <h3>Your Score</h3>
+            <div class="score-display" id="totalScore">0</div>
+            <p>Notes attempted: <span id="notesAttempted">0</span> | Average score: <span id="avgAccuracy">0 / 10</span></p>
+            <p style="font-size: 1rem; color: #718096;">10 = perfect, 1 = needs improvement</p>
+            <button class="btn btn-primary" id="copyScoreBtn" style="margin-top: 10px;">📋 Copy Score</button>
+            <div id="copyStatus" style="margin-top: 8px; color: #38a169; font-weight: bold; display: none;">Copied!</div>
+        </div>
+    </div>
+
+    <script>
+        class PitchDetector {
+            constructor() {
+                this.audioContext = null;
+                this.microphone = null;
+                this.analyser = null;
+                this.isListening = false;
+                this.targetFrequency = 261.63; // C4
+                this.currentNote = 'C4';
+                this.synth = new Tone.Synth().toDestination();
+                this.scores = [];
+                this.recordingStartTime = 0;
+                this.recordingDuration = 3000; // 3 seconds
+                this.isRecording = false;
+                this.currentVocalRange = 'tenor';
+
+                this.noteFrequencies = {
+                    'C2': 65.41, 'D2': 73.42, 'E2': 82.41, 'F2': 87.31, 'G2': 98.00, 'A2': 110.00, 'B2': 123.47,
+                    'C3': 130.81, 'C#3': 138.59, 'D3': 146.83, 'D#3': 155.56, 'E3': 164.81, 'F3': 174.61, 'F#3': 185.00, 'G3': 196.00, 'G#3': 207.65, 'A3': 220.00, 'A#3': 233.08, 'B3': 246.94,
+                    'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00, 'A#4': 466.16, 'B4': 493.88,
+                    'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'E5': 659.25, 'F5': 698.46, 'F#5': 739.99, 'G5': 783.99, 'G#5': 830.61, 'A5': 880.00, 'A#5': 932.33, 'B5': 987.77,
+                    'C6': 1046.50
+                };
+
+                this.vocalRanges = {
+                    soprano: ['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5', 'C#5', 'D5', 'D#5', 'E5', 'F5', 'F#5', 'G5', 'G#5', 'A5'],
+                    alto: ['G3', 'G#3', 'A3', 'A#3', 'B3', 'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5', 'C#5', 'D5', 'D#5', 'E5'],
+                    tenor: ['C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3', 'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4'],
+                    bass: ['E2', 'F2', 'G2', 'A2', 'B2', 'C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3', 'C4', 'C#4', 'D4', 'D#4', 'E4'],
+                    all: ['C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3', 'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5', 'C#5', 'D5', 'D#5', 'E5', 'F5', 'F#5', 'G5', 'G#5', 'A5', 'A#5', 'B5', 'C6']
+                };
+
+                this.init();
+            }
+
+            async init() {
+                this.drawStaff();
+                this.setupEventListeners();
+                this.generateRandomNote();
+            }
+
+            setupEventListeners() {
+                document.getElementById('playNoteBtn').addEventListener('click', () => this.playTargetNote());
+                document.getElementById('startListeningBtn').addEventListener('click', () => this.toggleListening());
+                document.getElementById('newNoteBtn').addEventListener('click', () => this.generateRandomNote());
+                document.getElementById('copyScoreBtn').addEventListener('click', () => this.copyScoreToClipboard());
+                document.getElementById('exportBtn').addEventListener('click', () => this.exportScore());
+                document.getElementById('vocalRange').addEventListener('change', (e) => {
+                    this.currentVocalRange = e.target.value;
+                    this.generateRandomNote();
+                });
+            }
+
+            async toggleListening() {
+                if (!this.isListening) {
+                    await this.startListening();
+                } else {
+                    this.stopListening();
+                }
+            }
+
+            async startListening() {
+                await Tone.start();
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true
+                        }
+                    });
+                    this.setupAudioProcessing(stream);
+                } catch (error) {
+                    alert('Microphone access error: ' + error.message);
+                }
+            }
+
+            setupAudioProcessing(stream) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+                this.microphone = this.audioContext.createMediaStreamSource(stream);
+                this.analyser = this.audioContext.createAnalyser();
+                this.analyser.fftSize = 4096;
+                this.analyser.smoothingTimeConstant = 0.8;
+                this.microphone.connect(this.analyser);
+                this.isListening = true;
+                this.isRecording = true;
+                this.recordingStartTime = Date.now();
+                document.getElementById('startListeningBtn').textContent = '⏹️ Stop Singing';
+                document.getElementById('startListeningBtn').className = 'btn btn-secondary';
+                document.getElementById('statusIndicator').className = 'status-indicator status-recording';
+                document.getElementById('statusIndicator').textContent = 'Recording';
+                this.detectPitch();
+                this.updateRecordingProgress();
+            }
+
+            stopListening() {
+                this.isListening = false;
+                this.isRecording = false;
+                if (this.audioContext) {
+                    this.audioContext.close();
+                }
+                document.getElementById('startListeningBtn').textContent = '🎤 Start Singing';
+                document.getElementById('startListeningBtn').className = 'btn btn-success';
+                document.getElementById('statusIndicator').className = 'status-indicator status-ready';
+                document.getElementById('statusIndicator').textContent = 'Ready';
+                document.getElementById('recordingProgress').style.width = '0%';
+                this.finishAttempt();
+            }
+
+            updateRecordingProgress() {
+                if (!this.isRecording) return;
+                const elapsed = Date.now() - this.recordingStartTime;
+                const progress = Math.min((elapsed / this.recordingDuration) * 100, 100);
+                document.getElementById('recordingProgress').style.width = progress + '%';
+                if (progress >= 100) {
+                    this.stopListening();
+                } else {
+                    requestAnimationFrame(() => this.updateRecordingProgress());
+                }
+            }
+
+            detectPitch() {
+                if (!this.isListening) return;
+                const bufferLength = this.analyser.fftSize;
+                const buffer = new Float32Array(bufferLength);
+                this.analyser.getFloatTimeDomainData(buffer);
+                const frequency = this.autoCorrelate(buffer, this.audioContext.sampleRate);
+                if (frequency > 0 && isFinite(frequency)) {
+                    const note = this.frequencyToNote(frequency);
+                    const accuracy = this.calculateAccuracy(frequency, this.targetFrequency);
+                    document.getElementById('currentPitch').textContent = note;
+                    document.getElementById('frequency').textContent = frequency.toFixed(2) + ' Hz';
+                    this.updateAccuracyDisplay(accuracy);
+                } else {
+                    document.getElementById('currentPitch').textContent = '--';
+                    document.getElementById('frequency').textContent = '-- Hz';
+                    this.updateAccuracyDisplay(0);
+                }
+                requestAnimationFrame(() => this.detectPitch());
+            }
+
+            autoCorrelate(buffer, sampleRate) {
+                const SIZE = buffer.length;
+                const rms = Math.sqrt(buffer.reduce((sum, val) => sum + val * val, 0) / SIZE);
+                if (rms < 0.01) return -1;
+                let r1 = 0, r2 = SIZE - 1;
+                const thres = 0.2;
+                for (let i = 0; i < SIZE / 2; i++) {
+                    if (Math.abs(buffer[i]) < thres) { r1 = i; break; }
+                }
+                for (let i = 1; i < SIZE / 2; i++) {
+                    if (Math.abs(buffer[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+                }
+                const trimmed = buffer.slice(r1, r2);
+                const c = new Array(trimmed.length).fill(0);
+                for (let i = 0; i < trimmed.length; i++) {
+                    for (let j = 0; j < trimmed.length - i; j++) {
+                        c[i] += trimmed[j] * trimmed[j + i];
+                    }
+                }
+                let d = 0;
+                while (c[d] > c[d + 1]) d++;
+                let maxval = -1, maxpos = -1;
+                for (let i = d; i < trimmed.length; i++) {
+                    if (c[i] > maxval) {
+                        maxval = c[i];
+                        maxpos = i;
+                    }
+                }
+                let T0 = maxpos;
+                if (T0 < 1) return -1;
+                const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+                const a = (x1 - 2 * x2 + x3) / 2;
+                const b = (x3 - x1) / 2;
+                if (a) T0 = T0 - b / (2 * a);
+                return sampleRate / T0;
+            }
+
+            frequencyToNote(frequency) {
+                const A4 = 440;
+                const C0 = A4 * Math.pow(2, -4.75);
+                const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+                if (frequency > C0) {
+                    const h = Math.round(12 * Math.log2(frequency / C0));
+                    const octave = Math.floor(h / 12);
+                    const n = h % 12;
+                    return noteNames[n] + octave;
+                }
+                return "";
+            }
+
+            calculateAccuracy(detected, target) {
+                const cents = 1200 * Math.log2(detected / target);
+                const accuracy = Math.max(0, 100 - Math.abs(cents) / 2); // 200 cents = 0% accuracy
+                return Math.min(100, accuracy);
+            }
+
+            updateAccuracyDisplay(accuracy) {
+                const accuracyBar = document.getElementById('accuracyBar');
+                const accuracyText = document.getElementById('accuracyText');
+                accuracyBar.style.width = accuracy + '%';
+                accuracyText.textContent = Math.round(accuracy) + '%';
+            }
+
+            async playTargetNote() {
+                await Tone.start();
+                this.synth.triggerAttackRelease(this.currentNote, '1n');
+                const playBtn = document.getElementById('playNoteBtn');
+                const originalText = playBtn.textContent;
+                playBtn.textContent = '🔊 Playing...';
+                playBtn.style.background = '#38a169';
+                setTimeout(() => {
+                    playBtn.textContent = originalText;
+                    playBtn.style.background = '#4299e1';
+                }, 1000);
+            }
+
+            generateRandomNote() {
+                const availableNotes = this.vocalRanges[this.currentVocalRange];
+                const randomNote = availableNotes[Math.floor(Math.random() * availableNotes.length)];
+                this.currentNote = randomNote;
+                this.targetFrequency = this.noteFrequencies[randomNote];
+                document.getElementById('targetNote').textContent = randomNote;
+                this.drawStaff();
+            }
+
+            finishAttempt() {
+                let lastAccuracy = parseFloat(document.getElementById('accuracyText').textContent) || 0;
+                let lastScore = Math.max(1, Math.round(lastAccuracy / 10));
+                this.scores.push(lastScore);
+                let avgScore = this.scores.reduce((a, b) => a + b, 0) / this.scores.length;
+                document.getElementById('totalScore').textContent = lastScore;
+                document.getElementById('notesAttempted').textContent = this.scores.length;
+                document.getElementById('avgAccuracy').textContent = avgScore.toFixed(1) + ' / 10';
+                document.getElementById('currentPitch').textContent = '--';
+                document.getElementById('frequency').textContent = '-- Hz';
+                document.getElementById('accuracyBar').style.width = '0%';
+                document.getElementById('accuracyText').textContent = '0%';
+            }
+
+            drawStaff() {
+                const canvas = document.getElementById('staffCanvas');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 5; i++) {
+                    const y = 60 + i * 15;
+                    ctx.beginPath();
+                    ctx.moveTo(50, y);
+                    ctx.lineTo(450, y);
+                    ctx.stroke();
+                }
+                for (let i = 0; i < 5; i++) {
+                    const y = 180 + i * 15;
+                    ctx.beginPath();
+                    ctx.moveTo(50, y);
+                    ctx.lineTo(450, y);
+                    ctx.stroke();
+                }
+                ctx.font = '40px serif';
+                ctx.fillStyle = '#333';
+                ctx.fillText('𝄞', 60, 100);
+                ctx.fillText('𝄢', 60, 210);
+                this.drawNote(ctx, this.currentNote);
+            }
+
+            drawNote(ctx, note) {
+                const notePositions = {
+                    'C2': 250, 'D2': 245, 'E2': 240, 'F2': 235, 'G2': 230, 'A2': 225, 'B2': 220,
+                    'C3': 215, 'D3': 210, 'E3': 205, 'F3': 200, 'G3': 195, 'A3': 190, 'B3': 185,
+                    'C4': 155,
+                    'D4': 105, 'E4': 97, 'F4': 90, 'G4': 82, 'A4': 75, 'B4': 67, 'C5': 60,
+                    'D5': 52, 'E5': 45, 'F5': 37, 'G5': 30, 'A5': 22, 'B5': 15, 'C6': 7,
+                    'C#3': 215, 'D#3': 210, 'F#3': 200, 'G#3': 195, 'A#3': 190,
+                    'C#4': 155, 'D#4': 105, 'F#4': 90, 'G#4': 82, 'A#4': 75,
+                    'C#5': 60, 'D#5': 52, 'F#5': 37, 'G#5': 30, 'A#5': 22
+                };
+                const y = notePositions[note] || 150;
+                const x = 200;
+                ctx.fillStyle = '#4299e1';
+                ctx.beginPath();
+                ctx.ellipse(x, y, 8, 6, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.strokeStyle = '#4299e1';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                if (y > 150) {
+                    ctx.moveTo(x + 8, y);
+                    ctx.lineTo(x + 8, y - 30);
+                } else {
+                    ctx.moveTo(x - 8, y);
+                    ctx.lineTo(x - 8, y + 30);
+                }
+                ctx.stroke();
+                if (note.includes('#')) {
+                    ctx.font = '16px serif';
+                    ctx.fillStyle = '#4299e1';
+                    ctx.fillText('♯', x - 25, y + 5);
+                }
+                ctx.strokeStyle = '#ed8936';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.ellipse(x, y, 12, 10, 0, 0, 2 * Math.PI);
+                ctx.stroke();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                if (note === 'C4') {
+                    ctx.beginPath();
+                    ctx.moveTo(x - 15, y);
+                    ctx.lineTo(x + 15, y);
+                    ctx.stroke();
+                }
+            }
+
+            getScoreSummary() {
+                let avgScore = 0;
+                if (this.scores && this.scores.length > 0) {
+                    avgScore = this.scores.reduce((a, b) => a + b, 0) / this.scores.length;
+                }
+                return (
+                    `Choir Pitch Detective Score Report\n` +
+                    `Date: ${new Date().toLocaleString()}\n` +
+                    `Notes attempted: ${this.scores.length}\n` +
+                    `Average score: ${avgScore.toFixed(1)} / 10\n` +
+                    `Scores: ${this.scores.join(', ')}\n`
+                );
+            }
+
+            copyScoreToClipboard() {
+                const summary = this.getScoreSummary();
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(summary).then(() => {
+                        const status = document.getElementById('copyStatus');
+                        status.style.display = 'block';
+                        setTimeout(() => { status.style.display = 'none'; }, 1500);
+                    });
+                } else {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = summary;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    const status = document.getElementById('copyStatus');
+                    status.style.display = 'block';
+                    setTimeout(() => { status.style.display = 'none'; }, 1500);
+                }
+            }
+
+            exportScore() {
+                const summary = this.getScoreSummary();
+                const dataBlob = new Blob([summary], {type: 'text/plain'});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `choir-practice-score-${new Date().toISOString().split('T')[0]}.txt`;
+                link.click();
+            }
+        }
+
+        window.addEventListener('load', () => {
+            new PitchDetector();
+        });
+    </script>
+</body>
+</html>
